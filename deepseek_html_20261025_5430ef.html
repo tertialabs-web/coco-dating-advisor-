@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Coco: Your Little Love Advisor</title>
+<script src="https://unpkg.com/lucide@latest"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* CSS SAMA SEPERTI SEBELUMNYA (DIJAMIN STABIL) */
+  :root { --bg-main: #FDFBF7; --primary-pink: #FF8A9F; --primary-hover: #FF7388; --soft-pink: #FFF0F0; --blue-hoodie: #8DB3D3; --green-skin: #A3C9A8; --cream: #FFF2C6; --dark-text: #2D3748; --gray-text: #718096; --white: #FFFFFF; --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04); --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.08); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-main); color: var(--dark-text); -webkit-tap-highlight-color: transparent; overflow: hidden; height: 100vh; height: 100dvh; }
+  h1, h2, h3, h4 { font-family: 'Nunito', sans-serif; }
+  .app-container { display: flex; height: 100%; max-width: 1200px; margin: 0 auto; }
+  .main-content { flex: 1; display: flex; flex-direction: column; height: 100%; position: relative; overflow: hidden; }
+  .scroll-area { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; scroll-behavior: smooth; }
+  .desktop-sidebar { width: 280px; display: none; flex-direction: column; padding: 24px; border-right: 1px solid #E2E8F0; background: var(--white); }
+  .mobile-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; background: var(--white); border-bottom: 1px solid #E2E8F0; padding-top: calc(16px + env(safe-area-inset-top)); z-index: 30; }
+  .mobile-nav { display: flex; justify-content: space-around; padding: 12px; background: var(--white); border-top: 1px solid #E2E8F0; position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+  @media (min-width: 768px) { .desktop-sidebar { display: flex; } .mobile-header, .mobile-nav { display: none !important; } .scroll-area { padding: 32px; padding-bottom: 32px; } .app-container { padding: 20px; gap: 20px; height: 100dvh; } .main-content { border-radius: 24px; background: var(--bg-main); border: 1px solid #E2E8F0; box-shadow: var(--shadow-md); } }
+  .card { background: var(--white); border-radius: 20px; padding: 24px; box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,0.03); margin-bottom: 16px; }
+  .btn-primary { background: var(--primary-pink); color: var(--white); border-radius: 999px; font-weight: 700; padding: 14px 24px; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(255,138,159,0.3); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; width: 100%; }
+  .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(255,138,159,0.3); }
+  .btn-secondary { background: var(--white); color: var(--dark-text); border: 2px solid #E2E8F0; border-radius: 999px; font-weight: 700; padding: 12px 24px; cursor: pointer; transition: all 0.2s; font-size: 15px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-secondary:hover { background: #F7FAFC; border-color: #CBD5E0; }
+  .btn-secondary:active { transform: translateY(1px); }
+  .pill { border: 2px solid #E2E8F0; border-radius: 999px; font-weight: 700; padding: 8px 16px; font-size: 13px; transition: all 0.2s; cursor: pointer; background: var(--white); color: var(--gray-text); white-space: nowrap; }
+  .pill.active { background: var(--primary-pink); color: var(--white); border-color: var(--primary-pink); }
+  .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--gray-text); cursor: pointer; padding: 8px; border-radius: 12px; transition: all 0.2s; }
+  .nav-item.active { color: var(--primary-pink); background: var(--soft-pink); }
+  .nav-item span { font-size: 10px; font-weight: 700; }
+  .desktop-sidebar .nav-item { flex-direction: row; justify-content: flex-start; padding: 14px 20px; gap: 16px; margin-bottom: 8px; border-radius: 16px; }
+  .desktop-sidebar .nav-item span { font-size: 16px; }
+  .bubble { background: var(--white); border: 2px solid #E2E8F0; border-radius: 20px; padding: 20px; position: relative; box-shadow: var(--shadow-sm); font-size: 15px; font-weight: 600; line-height: 1.6; color: var(--dark-text); flex: 1; margin-bottom: 20px; }
+  .bubble::before { content: ''; position: absolute; top: -12px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 18px; height: 18px; background: var(--white); border-left: 2px solid #E2E8F0; border-top: 2px solid #E2E8F0; border-radius: 4px 0 0 0; }
+  .mode-switch { display: flex; background: #E2E8F0; border-radius: 999px; padding: 4px; position: relative; cursor: pointer; width: 140px; }
+  .mode-knob { position: absolute; top: 4px; bottom: 4px; width: calc(50% - 4px); background: var(--white); border-radius: 999px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.2s; }
+  .mode-switch.duo .mode-knob { transform: translateX(100%); }
+  .mode-txt { flex: 1; text-align: center; font-size: 11px; font-weight: 800; z-index: 10; color: var(--gray-text); user-select: none; }
+  .mode-txt.active { color: var(--primary-pink); }
+  .xp-container { display: flex; flex-direction: column; align-items: flex-end; }
+  .xp-text { font-size: 11px; font-weight: 800; color: var(--gray-text); text-transform: uppercase; }
+  .xp-bar { width: 70px; height: 10px; background: #E2E8F0; border-radius: 999px; overflow: hidden; margin-top: 4px; }
+  .xp-fill { height: 100%; background: var(--primary-pink); transition: width 0.3s; }
+  .chat-container { height: 400px; overflow-y: auto; padding: 20px; background: #F8FAFC; border-radius: 20px; display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
+  .msg-ai { background: var(--white); border: 1px solid #E2E8F0; padding: 14px 18px; border-radius: 20px 20px 20px 4px; max-width: 85%; font-size: 14px; align-self: flex-start; box-shadow: var(--shadow-sm); }
+  .msg-user { background: var(--primary-pink); color: var(--white); padding: 14px 18px; border-radius: 20px 20px 4px 20px; max-width: 85%; font-size: 14px; align-self: flex-end; box-shadow: var(--shadow-sm); }
+  .chat-input-wrapper { display: flex; gap: 12px; }
+  .chat-input { flex: 1; background: var(--white); border: 2px solid #E2E8F0; border-radius: 999px; padding: 14px 20px; font-size: 14px; outline: none; transition: border 0.2s; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .chat-input:focus { border-color: var(--primary-pink); }
+  .hidden { display: none !important; }
+  .flex { display: flex; } .flex-col { flex-direction: column; } .flex-1 { flex: 1; }
+  .items-center { align-items: center; } .justify-between { justify-content: space-between; } .justify-center { justify-content: center; }
+  .gap-1 { gap: 4px; } .gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; } .gap-6 { gap: 24px; }
+  .w-full { width: 100%; } .h-full { height: 100%; }
+  .mt-1 { margin-top: 4px; } .mt-2 { margin-top: 8px; } .mt-4 { margin-top: 16px; } .mt-6 { margin-top: 24px; }
+  .mb-2 { margin-bottom: 8px; } .mb-4 { margin-bottom: 16px; } .mb-6 { margin-bottom: 24px; }
+  .text-center { text-align: center; } .text-right { text-align: right; }
+  .text-xs { font-size: 12px; } .text-sm { font-size: 14px; } .text-lg { font-size: 18px; } .text-xl { font-size: 22px; } .text-2xl { font-size: 28px; }
+  .font-bold { font-weight: 700; } .font-black { font-weight: 900; }
+  .uppercase { text-transform: uppercase; } .tracking-wider { letter-spacing: 0.05em; }
+  .rounded-xl { border-radius: 12px; } .rounded-full { border-radius: 999px; }
+  .overflow-x-auto { overflow-x: auto; } .no-scrollbar::-webkit-scrollbar { display: none; }
+  .fade-in { animation: fadeIn 0.3s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .option-btn { background: #FFF; border: 2px solid #E2E8F0; border-radius: 16px; padding: 16px; text-align: left; cursor: pointer; transition: 0.2s; font-size: 14px; font-weight: 600; width: 100%; margin-bottom: 12px; }
+  .option-btn:hover { border-color: var(--primary-pink); background: var(--soft-pink); }
+  .option-btn.selected { border-color: var(--primary-pink); background: var(--primary-pink); color: #FFF; }
+  .step-card { display: flex; gap: 16px; margin-bottom: 16px; }
+  .step-num { width: 32px; height: 32px; background: var(--primary-pink); color: #FFF; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; flex-shrink: 0; }
+  .step-text h4 { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+  .step-text p { font-size: 13px; color: var(--gray-text); line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<div id="app" class="app-container">
+  <aside id="desktop-sidebar" class="desktop-sidebar"></aside>
+  <div class="main-content">
+    <header id="mobile-header" class="mobile-header"></header>
+    <div id="content-area" class="scroll-area"></div>
+    <nav id="mobile-nav-container" class="mobile-nav"></nav>
+  </div>
+</div>
+
+<div id="inputModal" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:50; display:flex; align-items:center; justify-content:center; padding:20px;">
+  <div class="card" style="max-width:400px; width:100%; margin:0; padding:32px;">
+    <h3 id="modalTitle" class="font-black text-xl mb-4">Input</h3>
+    <textarea id="modalInput" rows="3" class="chat-input mb-4" style="border-radius:16px; width:100%;" placeholder="Type here..."></textarea>
+    <div class="flex gap-3">
+      <button id="btn-modal-cancel" class="btn-secondary flex-1">Cancel</button>
+      <button id="btn-modal-save" class="btn-primary flex-1">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =========================================================
+// KONFIGURASI OPENAI API
+// =========================================================
+// GANTI STRING DI BAWAH DENGAN API KEY DARI OPENAI
+const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"; 
+
+// =========================================================
+// 1. STATE & UTILS
+// =========================================================
+const appState = {
+  currentPage: 'home', mode: 'personal', onboardingComplete: false,
+  personalityResult: null, journalEntries: [], chatHistory: [], streak: 0, level: 1, xp: 0,
+  activeDiscoverTab: 'personality', activeAskTab: 'chat', chemAnswers: [null,null,null,null,null],
+  vibeAnswers: [null,null,null], quizAnswers: new Array(12).fill(null), currentQuizIdx: 0,
+  guideText: "Hi! I'm Coco, your love advisor. Let's discover your dating personality!",
+  isTyping: false, activeTone: 'Sweet', typingTimer: null,
+  currentNumQ: null, currentDeepQ: null, currentPartyCard: null, activeDeepLevel: 1, activePartyType: 'tod',
+  isPlaying: false
+};
+
+function saveState() {
+  try {
+    localStorage.setItem('coco_state', JSON.stringify({
+      mode: appState.mode, onboardingComplete: appState.onboardingComplete,
+      personalityResult: appState.personalityResult, streak: appState.streak,
+      journalEntries: appState.journalEntries, level: appState.level, xp: appState.xp
+    }));
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('coco_state');
+    if (saved) Object.assign(appState, JSON.parse(saved));
+  } catch(e) {}
+}
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag]));
+}
+
+function addXP(amount) {
+  appState.xp += amount;
+  if (appState.xp >= appState.level * 100) {
+    appState.level++;
+    showToast(`🎉 LEVEL UP! Level ${appState.level}!`);
+  }
+  saveState();
+  renderHeader();
+  renderPage();
+}
+
+// =========================================================
+// 2. INITIAL C LOGO
+// =========================================================
+function renderLogo(size = 48) {
+  return `
+  <div style="width:${size}px; height:${size}px; background:var(--primary-pink); border-radius:50%; display:flex; align-items:center; justify-content:center; color:#FFF; font-size:${size*0.5}px; font-weight:900; font-family:'Nunito', sans-serif; box-shadow:var(--shadow-sm);">
+    C
+  </div>`;
+}
+
+// =========================================================
+// 3. TYPEWRITER & RENDER CORE
+// =========================================================
+function typeText(htmlContent) {
+  if (appState.typingTimer) clearInterval(appState.typingTimer);
+  const container = document.getElementById('guide-text-container');
+  if (!container) return;
+
+  container.innerHTML = '';
+  const tempDiv = document.createElement('div'); tempDiv.innerHTML = htmlContent;
+  const text = tempDiv.textContent || tempDiv.innerText || "";
+  let i = 0;
+  
+  appState.typingTimer = setInterval(() => {
+    if (i < text.length) { container.textContent += text.charAt(i); i++; } 
+    else { clearInterval(appState.typingTimer); container.innerHTML = htmlContent; }
+  }, 25);
+}
+
+const NAV_ITEMS = [
+  { id: 'home', label: 'Home', icon: 'home' },
+  { id: 'discover', label: 'Discover', icon: 'compass' },
+  { id: 'ask', label: 'Ask Coco', icon: 'message-circle' },
+  { id: 'coach', label: 'Love Advice', icon: 'edit-3' },
+  { id: 'mylove', label: 'My Love', icon: 'heart' }
+];
+
+const TUTORIALS = {
+  home: "Hi! I'm Coco. How is your heart today? Tap a mood below to check in, or explore the menus!",
+  discover: "In Discover, play games to understand yourself better! Try the Personality Test or Party Deck.",
+  ask: "Need advice? Type your situation in the chat! I can help with crushes, mixed signals, or boundaries.",
+  coach: "Welcome to Love Advice AI! I can help you craft the perfect text. Choose a situation and tone.",
+  mylove: "Your personal space. See your Personality result, write in your secret Love Journal, and track progress."
+};
+
+function renderHeader() {
+  const level = appState.level || 1;
+  const xpPct = Math.min(100, (appState.xp || 0) % 100);
+  
+  const desktopHtml = `
+    <div class="flex items-center gap-4 mb-8">
+      <div>${renderLogo(48)}</div>
+      <div><h1 class="font-black text-2xl" style="line-height:1;">Coco</h1><p class="text-xs font-bold text-gray-500 mt-1">Find Your Soulmate</p></div>
+    </div>
+    <div class="mb-8 px-1">
+      <div class="mode-switch ${appState.mode === 'duo' ? 'duo' : ''}" id="desktop-mode-toggle">
+        <div class="mode-knob"></div>
+        <div class="mode-txt ${appState.mode === 'personal' ? 'active' : ''}">SOLO</div>
+        <div class="mode-txt ${appState.mode === 'duo' ? 'active' : ''}">COUPLE</div>
+      </div>
+    </div>
+    <nav id="desktop-nav-container" class="flex flex-col gap-2"></nav>
+    <div style="margin-top:auto; padding-top:24px; border-top:1px solid #E2E8F0;" class="flex items-center justify-between">
+      <div class="xp-container" style="align-items:flex-start;"><span class="xp-text">Lv. ${level}</span><div class="xp-bar" style="width:120px;"><div class="xp-fill" style="width:${xpPct}%"></div></div></div>
+    </div>
+  `;
+  
+  const mobileHtml = `
+    <div class="flex items-center gap-3">
+      <div>${renderLogo(36)}</div>
+      <div><h1 class="font-black text-xl" style="line-height:1;">Coco</h1></div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="xp-container"><span class="xp-text">Lv. ${level}</span><div class="xp-bar" style="width:40px;"><div class="xp-fill" style="width:${xpPct}%"></div></div></div>
+      <div class="mode-switch ${appState.mode === 'duo' ? 'duo' : ''}" id="mobile-mode-toggle" style="width:90px;">
+        <div class="mode-knob"></div>
+        <div class="mode-txt ${appState.mode === 'personal' ? 'active' : ''}" style="font-size:8px;">SOLO</div>
+        <div class="mode-txt ${appState.mode === 'duo' ? 'active' : ''}" style="font-size:8px;">DUO</div>
+      </div>
+      <button id="btn-reset" class="btn-secondary" style="padding:8px; width:auto; border:none; background:#F7FAFC;"><i data-lucide="rotate-ccw" style="width:16px; height:16px;"></i></button>
+    </div>
+  `;
+  
+  document.getElementById('desktop-sidebar').innerHTML = desktopHtml;
+  document.getElementById('mobile-header').innerHTML = mobileHtml;
+  
+  const navHtml = NAV_ITEMS.map(item => `
+    <div data-nav="${item.id}" class="nav-item ${appState.currentPage === item.id ? 'active' : ''}">
+      <i data-lucide="${item.icon}" style="width:22px; height:22px;"></i>
+      <span>${item.label}</span>
+    </div>
+  `).join('');
+  
+  document.getElementById('mobile-nav-container').innerHTML = navHtml;
+  document.getElementById('desktop-nav-container').innerHTML = navHtml;
+  if (window.lucide) lucide.createIcons();
+}
+
+function renderPage() {
+  const area = document.getElementById('content-area');
+  if (!area) return;
+  const scrollPos = area.scrollTop;
+
+  if (!appState.onboardingComplete && appState.currentPage === 'home') {
+    area.innerHTML = renderOnboarding();
+    if (window.lucide) lucide.createIcons();
+    setTimeout(() => typeText(appState.guideText), 50);
+    return;
+  }
+  
+  if (TUTORIALS[appState.currentPage] && appState.guideText !== TUTORIALS[appState.currentPage]) {
+     appState.guideText = TUTORIALS[appState.currentPage];
+  }
+
+  switch (appState.currentPage) {
+    case 'home': area.innerHTML = renderHome(); break;
+    case 'discover': area.innerHTML = renderDiscover(); break;
+    case 'ask': area.innerHTML = renderAskCoco(); break;
+    case 'coach': area.innerHTML = renderLoveAdvice(); break;
+    case 'mylove': area.innerHTML = renderMyLove(); break;
+  }
+  
+  area.scrollTop = scrollPos;
+  if (window.lucide) lucide.createIcons();
+  setTimeout(() => typeText(appState.guideText), 50);
+}
+
+// =========================================================
+// 4. DATA & LOGIC
+// =========================================================
+const NUMBER_QUESTIONS = [
+  {id:1, cat:"Basics", text:"Siapa nama panggilan paling random atau aneh yang pernah kamu punya?"},
+  {id:2, cat:"Basics", text:"Apa makanan favorit yang nggak bakal pernah kamu tolak jam berapa pun?"},
+  {id:3, cat:"Basics", text:"Kamu tipe orang yang bangun pagi langsung segar atau butuh nyawa 1 jam dulu?"},
+  {id:16, cat:"Hobbies", text:"Hobi apa yang paling pengen kamu coba tapi belum kesampaian?"},
+  {id:36, cat:"Life", text:"Nasihat hidup terbaik apa yang pernah kamu dapat?"},
+  {id:61, cat:"Social", text:"Pernah nge-stalk IG/TikTok siapa jam 2 malam terus ketahuan nge-like foto lama?"},
+  {id:81, cat:"Relationships", text:"Apa hal pertama yang bikin kamu tertarik sama lawan jenis?"},
+  {id:111, cat:"Spicy", text:"Apa fantasi romantis paling manis yang pernah kamu bayangin?"}
+];
+const DEEP_Q = {
+  1: ["Hal kecil apa yang bikin kamu merasa dihargai?", "Lagu yang ngingetin kamu sama masa kecil?", "Kalau punya waktu luang 1 hari tanpa HP, mau ngapain?"],
+  2: ["Kapan terakhir kali kamu nangis dan apa alasannya?", "Hal apa yang paling kamu syukuri sekarang?", "Pernah merasa jadi 'orang kedua'?"],
+  3: ["Ketakutan terbesar soal hubungan?", "Kalau hidup bisa di-rewind, momen apa yang mau diubah?", "Bagian diri yang paling susah ditunjukin?"]
+};
+const PARTY_CARDS = {
+  tod: [{type:'TRUTH', text:"Siapa mantan yang paling susah dilupakan dan kenapa?"}, {type:'DARE', text:"Kirim emoji '🙈' ke story crush tanpa konteks!"}, {type:'TRUTH', text:"Pernah stalking akun pacar teman sendiri?"}, {type:'DARE', text:"Puji lawan main kamu dengan 3 kalimat gombal tanpa jeda!"}],
+  wyr: [{type:'WOULD YOU RATHER', text:"Pacar lupa bales chat SEHARIAN ATAU pacar overprotective?"}, {type:'WOULD YOU RATHER', text:"Kencan mewah tapi garing ATAU lesehan tapi ngobrol seru?"}, {type:'WOULD YOU RATHER', text:"Punya pasangan yang jujur tapi nyakitin ATAU manis tapi pembohong?"}],
+  mlt: [{type:'MOST LIKELY TO', text:"Siapa yang paling mungkin ketiduran pas nonton bioskop?"}, {type:'MOST LIKELY TO', text:"Siapa yang paling mungkin nangis pas film sedih?"}, {type:'MOST LIKELY TO', text:"Siapa yang paling mungkin ngajak ribut hal sepele?"}],
+  nhie: [{type:'NEVER HAVE I EVER', text:"Gak pernah pura-pura sakit demi skip janji ketemuan."}, {type:'NEVER HAVE I EVER', text:"Gak pernah salah sebut nama pacar pakai nama mantan."}, {type:'NEVER HAVE I EVER', text:"Gak pernah nge-stalk mantan pas lagi baper sama orang baru."}]
+};
+const QUIZ_QUESTIONS = [
+  { q: "Friday night plan?", opts: [{t:"Planned dinner with friends", v:"blunt"}, {t:"Cozy night in with someone I love", v:"momo"}, {t:"Spontaneous night out", v:"pippo"}, {t:"Alone time with a book", v:"lulu"}] },
+  { q: "Friend cancels 1 hour before?", opts: [{t:"\"Please tell me earlier.\"", v:"blunt"}, {t:"\"Are you okay?\"", v:"momo"}, {t:"\"Let's go out anyway!\"", v:"pippo"}, {t:"\"Relieved, I need me-time.\"", v:"lulu"}] },
+  { q: "What matters most?", opts: [{t:"Clear intentions", v:"blunt"}, {t:"Feeling safe", v:"momo"}, {t:"Fun & laughter", v:"pippo"}, {t:"Deep understanding", v:"lulu"}] },
+  { q: "Ideal first date?", opts: [{t:"Cafe with a clear time", v:"blunt"}, {t:"Home-cooked meal", v:"momo"}, {t:"Arcade/karaoke", v:"pippo"}, {t:"Museum/long walk", v:"lulu"}] },
+  { q: "Compliment reaction?", opts: [{t:"Take it & mean it", v:"blunt"}, {t:"Blush & give back", v:"momo"}, {t:"Turn to a joke", v:"pippo"}, {t:"Wonder why", v:"lulu"}] },
+  { q: "Which word fits?", opts: [{t:"Reliable", v:"blunt"}, {t:"Caring", v:"momo"}, {t:"Fun", v:"pippo"}, {t:"Deep", v:"lulu"}] },
+  { q: "When stressed?", opts: [{t:"Make a list", v:"blunt"}, {t:"Call someone", v:"momo"}, {t:"Distract myself", v:"pippo"}, {t:"Go quiet", v:"lulu"}] },
+  { q: "Biggest red flag?", opts: [{t:"Inconsistency", v:"blunt"}, {t:"Coldness", v:"momo"}, {t:"Boring talks", v:"pippo"}, {t:"Doesn't get me", v:"lulu"}] },
+  { q: "Show you care?", opts: [{t:"Show up on time", v:"blunt"}, {t:"Remember small things", v:"momo"}, {t:"Make them laugh", v:"pippo"}, {t:"Share something made", v:"lulu"}] },
+  { q: "Friends say you are?", opts: [{t:"Dependable", v:"blunt"}, {t:"The listener", v:"momo"}, {t:"Life of party", v:"pippo"}, {t:"Cool inner world", v:"lulu"}] },
+  { q: "Love language?", opts: [{t:"Acts of Service", v:"blunt"}, {t:"Words of Affirmation", v:"momo"}, {t:"Quality Time", v:"pippo"}, {t:"Physical Touch", v:"lulu"}] },
+  { q: "Love should feel?", opts: [{t:"Safe & honest", v:"blunt"}, {t:"Warm & soft", v:"momo"}, {t:"Fun & alive", v:"pippo"}, {t:"Deep & magical", v:"lulu"}] }
+];
+const PERSONALITIES = {
+  blunt: { name: "Blunt Byo", tag: "The Straight Shooter", desc: "You say what you mean and keep promises.", traits: ["Big sibling energy","Straightforward","Rule follower","Keeps promises"], color: "var(--primary-pink)", icon: "shield" },
+  momo: { name: "Cozy Momo", tag: "The Warm Hug", desc: "You make everyone feel safe and cared for.", traits: ["Natural caretaker","Remembers details","Patient listener","Loyal"], color: "#FDBA74", icon: "heart" },
+  pippo: { name: "Chatty Pippo", tag: "The Social Spark", desc: "You bring the energy and the fun.", traits: ["Storyteller","Expressive","Friendly","Fun-first"], color: "#FBBF24", icon: "zap" },
+  lulu: { name: "Dreamy Lulu", tag: "The Free Spirit", desc: "You have a rich inner world and notice beauty.", traits: ["Creative","Perceptive","Authentic","Needs solo time"], color: "#D8B4FE", icon: "moon" }
+};
+const CHEM_QUESTIONS = [
+  {q:"If it suddenly rains on a date, you…", a:[{t:"Find a cozy cafe", v:2}, {t:"Walk in the rain", v:1}]},
+  {q:"Splitting the bill on a first date…", a:[{t:"Always fair", v:2}, {t:"Whoever asked pays", v:2}]},
+  {q:"The most comfortable late-night conversation:", a:[{t:"Past stories & dreams", v:2}, {t:"Random memes & jokes", v:1}]},
+  {q:"When you disagree…", a:[{t:"Discuss until we compromise", v:2}, {t:"Take space and revisit", v:2}]},
+  {q:"Ideal chat frequency:", a:[{t:"Reply when free", v:2}, {t:"Constant updates", v:1}]}
+];
+const DATE_IDEAS = [
+  {title:"Membumi Kopi", budget:"CHEAP", vibe:"CHILL", desc:"Jl. Cipete VIII No. 93A, Jakarta Selatan. Oase Ghibli tersembunyi — pas buat deep talk."},
+  {title:"Arborea Cafe", budget:"CHEAP", vibe:"OUTDOOR", desc:"Manggala Wanabakti, Jakarta Pusat. Kedai kabin kayu estetik di hutan kota."},
+  {title:"Kurasu Kissaten", budget:"MID", vibe:"CHILL", desc:"Jl. Iskandarsyah I No. 9, Jakarta Selatan. Suasana Jepang minimalis yang tenang."},
+  {title:"Gordi HQ", budget:"MID", vibe:"OUTDOOR", desc:"Jl. Jeruk Purut Dalam No. 25, Jakarta Selatan. Piknik lesehan di rumput hijau."},
+  {title:"Museum MACAN", budget:"MID", vibe:"ARTSY", desc:"AKR Tower, Kebon Jeruk, Jakarta Barat. Galeri seni modern + ngopi santai."},
+  {title:"Hutan Kota GBK", budget:"FREE", vibe:"OUTDOOR", desc:"Gelora Bung Karno, Senayan, Jakarta Pusat. Piknik bawa tikar & camilan favorit."},
+  {title:"Henshin Rooftop", budget:"FANCY", vibe:"CHILL", desc:"The Ritz-Carlton, Kuningan, Jakarta Selatan. Fine dining view city light Jakarta."}
+];
+const VIBE_QUESTIONS = [
+  {q:"Bagaimana dia memperlakukan waiter / kasir pas kencan?", a:["Sopan", "Biasa aja", "Kurang sopan"]},
+  {q:"Apakah dia mendengarkan kamu tanpa sering buka HP?", a:["Selalu fokus", "Kadang buka", "Sering buka"]},
+  {q:"Apakah dia ingat detail kecil yang pernah kamu ceritakan?", a:["Selalu ingat", "Kadang ingat", "Sering lupa"]}
+];
+const COACH_TEMPLATES = {
+  start: { Sweet: ["Hey! I've been thinking about our last chat. How's your day going? 💗", "I saw something today that reminded me of you. Hope you're having a good one!"], Playful: ["Okay random question: are you a coffee or tea person? ☕ (asking for a friend... it's me)", "Guess what? I just realized we haven't talked today. That's a problem. 😉"], Casual: ["Hey! What's up? Any fun plans this weekend?", "Just popping in to say hi. Hope things are good!"], Confident: ["Hey, I enjoyed talking to you last time. Let's do it again soon.", "I'm going to be honest — I want to get to know you better. Coffee this week?"], Honest: ["Hey, I wanted to reach out and see how you've been. No pressure, just saying hi."] },
+  flirt: { Sweet: ["You have this way of making me smile even when I'm stressed. Just thought you should know. 🌸", "Talking to you is the highlight of my day, honestly."], Playful: ["Okay, I need to know — are you always this distracting, or is it just me? 😏", "I was going to play it cool today, but then I saw your message. So much for that plan."], Casual: ["Hey, you've been on my mind. Good thing? Maybe. 😏"], Confident: ["I'm going to say it: I really like talking to you. Let's keep doing that.", "You're kind of incredible. Just stating facts."], Honest: ["I want to be upfront — I enjoy this. Whatever this is between us, I don't want to rush it, but I do want to explore it."] },
+  askout: { Sweet: ["Would you want to grab coffee with me this week? No pressure — just thought it could be fun. 💗"], Playful: ["So... I have this theory that you'd be a great coffee date. Want to test it? ☕"], Casual: ["Hey, free this weekend? Thought we could grab a drink or something."], Confident: ["I've been wanting to ask you out. Are you free Friday?"], Honest: ["I'd like to take you out. Nothing crazy — just a chance to actually talk in person. What do you think?"] },
+  feelings: { Sweet: ["I've been wanting to tell you something. I really like you. And I wanted to be honest instead of guessing."], Playful: ["Okay, serious moment: I like you. Like, like you. Just had to say it before I exploded. 😅"], Honest: ["I want to be honest about where I'm at. I care about you, and I'd like to see where this goes — if you feel the same way."] }
+};
+
+// =========================================================
+// 5. AI INTEGRATION (OPENAI API)
+// =========================================================
+async function callOpenAI(prompt, systemMessage = "You are Coco, a warm and honest dating advisor. Provide empathetic, practical, and balanced advice. Keep it concise (max 3 sentences).") {
+  if (OPENAI_API_KEY === "YOUR_OPENAI_API_KEY") {
+    return "⚠️ API Key belum disetel. Ini adalah respons simulasi: Coba tanyakan hal lain atau siapkan API Key Anda.";
+  }
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemMessage },
+          { role: "user", content: prompt }
+        ],
+        max_tokens: 100,
+        temperature: 0.7
+      })
+    });
+
+    if (!response.ok) throw new Error("API Error");
+    const data = await response.json();
+    return data.choices[0].message.content.trim();
+  } catch (error) {
+    console.error(error);
+    return "Maaf, koneksi ke AI sedang terganggu. Coba lagi nanti ya.";
+  }
+}
+
+// =========================================================
+// 6. PAGES
+// =========================================================
+function renderOnboarding() {
+  return `
+    <div style="max-width:400px; margin:0 auto;" class="fade-in">
+      <div class="card text-center mt-6" style="padding:40px 24px;">
+        <div class="flex justify-center mb-6"><div>${renderLogo(80)}</div></div>
+        <div class="bubble mb-8" style="min-height:90px; display:flex; align-items:center; justify-content:center;"><p id="guide-text-container"></p></div>
+        <h2 class="font-black text-2xl mb-2">Welcome!</h2>
+        <p class="text-sm text-gray-500 mb-8">I'm Coco, your love advisor. Let's figure out your love style.</p>
+        <button data-action="complete-onboard" class="btn-primary mb-3">Let's Get Started</button>
+        <button data-action="complete-onboard-skip" class="btn-secondary">Explore First</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderHome() {
+  const isDuo = appState.mode === 'duo';
+  return `
+    <div style="max-width:600px; margin:0 auto;" class="fade-in">
+      <div class="card text-center mb-6">
+        <div class="flex justify-center mb-4"><div>${renderLogo(80)}</div></div>
+        <div class="bubble" style="min-height:80px; display:flex; align-items:center; justify-content:center;"><p id="guide-text-container"></p></div>
+      </div>
+      
+      <div class="card flex justify-between items-center mb-6">
+        <div>
+          <h2 class="font-black text-xl">Hey, ${isDuo ? 'you two' : 'love'}! 💗</h2>
+          <p class="text-sm text-gray-500 mt-1">${isDuo ? 'How is the connection going?' : "What's happening today?"}</p>
+        </div>
+        <div style="background:var(--cream); padding:12px 20px; border-radius:20px; text-align:center;">
+          <span class="text-xs font-black text-yellow-700 uppercase">Streak</span>
+          <span class="block text-2xl font-black mt-1">${appState.streak} 🔥</span>
+        </div>
+      </div>
+
+      <div class="card mb-6">
+        <h3 class="font-bold text-base mb-4">${isDuo ? 'Shared check-in' : "How's your heart today?"}</h3>
+        <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2">
+          ${['Excited','Hopeful','Confused','Nervous','Lonely','Heartbroken'].map(emo => `
+            <button data-checkin="${emo}" class="pill">${emo}</button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- First Date Playbook -->
+      <div class="card mb-6">
+        <div class="flex items-center gap-2 mb-4 border-b pb-3">
+          <i data-lucide="book-open" class="text-coco-pink" style="width:20px; height:20px;"></i>
+          <h3 class="font-bold text-lg">First Date Playbook</h3>
+        </div>
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-text"><h4>Cara Mengajak</h4><p>"Hey, aku seneng ngobrol sama kamu. Mau ngopi bareng minggu ini?" (Langsung, jelas, tanpa muter-muter).</p></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-text"><h4>Topik Obrolan</h4><p>Fokus dengerin dia. Tanya hal ringan (hobi, film, makanan). Jangan interogasi, jangan bahas mantan.</p></div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-text"><h4>Siapa yang Bayar?</h4><p>Tawarkan diri untuk bayar duluan. Kalau dia bersikeras split bill, terima dengan lapang dada.</p></div>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <button data-nav="ask" class="card flex flex-col items-center justify-center p-6 hover:bg-gray-50 flex-1" style="margin:0; cursor:pointer; border-radius:20px;">
+          <i data-lucide="message-circle" style="width:32px; height:32px; color:var(--blue-hoodie); margin-bottom:12px;"></i>
+          <span class="font-bold text-base">${isDuo ? 'Ask Us' : 'Ask Coco'}</span>
+        </button>
+        <button data-nav="discover" class="card flex flex-col items-center justify-center p-6 hover:bg-gray-50 flex-1" style="margin:0; cursor:pointer; border-radius:20px;">
+          <i data-lucide="compass" style="width:32px; height:32px; color:var(--primary-pink); margin-bottom:12px;"></i>
+          <span class="font-bold text-base">${isDuo ? 'Games' : 'Discover'}</span>
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderDiscover() {
+  if (appState.isPlaying) {
+    return `
+      <div style="max-width:600px; margin:0 auto;" class="fade-in">
+        <div class="flex justify-between items-center mb-6">
+          <h2 class="font-black text-2xl">${appState.activeDiscoverTab === 'personality' ? 'Personality Test' : appState.activeDiscoverTab === 'number' ? 'Pick a Number' : appState.activeDiscoverTab === 'deeptalk' ? 'Deep Talk' : 'Party Deck'}</h2>
+          <button data-action="close-discover" class="pill flex items-center gap-1"><i data-lucide="arrow-left" style="width:14px; height:14px;"></i> Back</button>
+        </div>
+        <div>
+          ${appState.activeDiscoverTab === 'number' ? renderNumberGame() : ''}
+          ${appState.activeDiscoverTab === 'deeptalk' ? renderDeepTalk() : ''}
+          ${appState.activeDiscoverTab === 'party' ? renderPartyDeck() : ''}
+          ${appState.activeDiscoverTab === 'personality' ? renderPersonalityTest() : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  const isDuo = appState.mode === 'duo';
+  return `
+    <div style="max-width:600px; margin:0 auto;" class="fade-in">
+      <div class="card text-center mb-6">
+        <div class="flex justify-center mb-4"><div>${renderLogo(80)}</div></div>
+        <div class="bubble"><p id="guide-text-container"></p></div>
+      </div>
+      <h2 class="font-black text-2xl mb-6">${isDuo ? 'Couple Games' : 'Discover'}</h2>
+      
+      <!-- Menu Grid -->
+      <div class="grid gap-4 mb-6">
+        <!-- Personality Test -->
+        <div class="card flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition" onclick="startDiscover('personality')" style="margin:0; padding:16px;">
+          <div style="width:48px; height:48px; border-radius:12px; background:#FFF0F0; display:flex; align-items:center; justify-content:center; color:var(--primary-pink); flex-shrink:0;">
+            <i data-lucide="compass" style="width:24px; height:24px;"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base">Dating Personality Test</h3>
+            <p class="text-xs text-gray-500 mt-1">Temukan tipe kepribadianmu dalam berpacaran (12 pertanyaan).</p>
+          </div>
+        </div>
+
+        <!-- Pick a Number -->
+        <div class="card flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition" onclick="startDiscover('number')" style="margin:0; padding:16px;">
+          <div style="width:48px; height:48px; border-radius:12px; background:#F0FDF4; display:flex; align-items:center; justify-content:center; color:#10B981; flex-shrink:0;">
+            <i data-lucide="hash" style="width:24px; height:24px;"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base">Pick a Number</h3>
+            <p class="text-xs text-gray-500 mt-1">Pertanyaan ringan untuk memecah kebekuan (ice breaking).</p>
+          </div>
+        </div>
+
+        <!-- Deep Talk -->
+        <div class="card flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition" onclick="startDiscover('deeptalk')" style="margin:0; padding:16px;">
+          <div style="width:48px; height:48px; border-radius:12px; background:#EFF6FF; display:flex; align-items:center; justify-content:center; color:#3B82F6; flex-shrink:0;">
+            <i data-lucide="moon" style="width:24px; height:24px;"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base">Deep Talk</h3>
+            <p class="text-xs text-gray-500 mt-1">Pertanyaan mendalam untuk koneksi yang lebih serius (2 AM Talk).</p>
+          </div>
+        </div>
+
+        <!-- Party Deck -->
+        <div class="card flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition" onclick="startDiscover('party')" style="margin:0; padding:16px;">
+          <div style="width:48px; height:48px; border-radius:12px; background:#FFF7ED; display:flex; align-items:center; justify-content:center; color:#F97316; flex-shrink:0;">
+            <i data-lucide="gamepad-2" style="width:24px; height:24px;"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-base">Party Deck</h3>
+            <p class="text-xs text-gray-500 mt-1">Truth or Dare, Would You Rather, dan games seru lainnya.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function startDiscover(tab) {
+  appState.activeDiscoverTab = tab;
+  appState.isPlaying = true;
+  if (tab === 'number') appState.currentNumQ = null;
+  if (tab === 'deeptalk') appState.currentDeepQ = null;
+  if (tab === 'party') appState.currentPartyCard = null;
+  renderPage();
+}
+
+function renderNumberGame() {
+  if (!appState.currentNumQ) appState.currentNumQ = NUMBER_QUESTIONS[Math.floor(Math.random() * NUMBER_QUESTIONS.length)];
+  const q = appState.currentNumQ;
+  return `<div class="card"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-lg">Pick a Number</h3><span class="pill active">#${q.id}</span></div><div style="background:#F8FAFC; border-radius:16px; padding:24px; text-align:center; margin-bottom:20px;"><span class="text-xs font-bold text-gray-500 uppercase tracking-wider">${q.cat}</span><p class="font-bold text-xl mt-2">"${q.text}"</p></div><button data-action="next-num" class="btn-primary w-full">Next Question</button></div>`;
+}
+
+function renderDeepTalk() {
+  if (!appState.currentDeepQ) { const pool = DEEP_Q[appState.activeDeepLevel]; appState.currentDeepQ = pool[Math.floor(Math.random() * pool.length)]; }
+  return `<div class="card"><h3 class="font-bold text-lg mb-4">Deep Talk</h3><div class="flex gap-2 mb-4"><button data-deep="1" class="pill flex-1 ${appState.activeDeepLevel === 1 ? 'active' : ''}">Warm Up</button><button data-deep="2" class="pill flex-1 ${appState.activeDeepLevel === 2 ? 'active' : ''}">Spill</button><button data-deep="3" class="pill flex-1 ${appState.activeDeepLevel === 3 ? 'active' : ''}">2 AM</button></div><div style="background:#F8FAFC; border-radius:16px; padding:24px; text-align:center; margin-bottom:20px;"><p class="font-bold text-xl">"${appState.currentDeepQ}"</p></div><button data-action="next-deep" class="btn-primary w-full">Next Question</button></div>`;
+}
+
+function renderPartyDeck() {
+  if (!appState.currentPartyCard) { const pool = PARTY_CARDS[appState.activePartyType]; appState.currentPartyCard = pool[Math.floor(Math.random() * pool.length)]; }
+  const c = appState.currentPartyCard; const isDare = c.type === 'DARE';
+  return `<div class="card"><div class="flex justify-between items-center mb-4"><h3 class="font-bold text-lg">Party Deck</h3><span class="pill ${isDare ? 'active' : ''}">${c.type}</span></div><div class="flex gap-2 mb-4 flex-wrap"><button data-party="tod" class="pill ${appState.activePartyType === 'tod' ? 'active' : ''}">Truth/Dare</button><button data-party="wyr" class="pill ${appState.activePartyType === 'wyr' ? 'active' : ''}">WYR</button><button data-party="mlt" class="pill ${appState.activePartyType === 'mlt' ? 'active' : ''}">Most Likely</button><button data-party="nhie" class="pill ${appState.activePartyType === 'nhie' ? 'active' : ''}">NHIE</button></div><div style="background:#F8FAFC; border-radius:16px; padding:32px 24px; text-align:center; margin-bottom:20px;"><p class="font-bold text-xl">"${c.text}"</p>${isDare ? `<button data-action="accept-dare" class="btn-primary w-full mt-6">Accept Challenge (+10 XP)</button>` : ''}</div><button data-action="next-party" class="btn-secondary w-full">Draw Next Card</button></div>`;
+}
+
+function renderPersonalityTest() {
+  if (appState.personalityResult) {
+    const res = PERSONALITIES[appState.personalityResult];
+    return `<div class="card text-center" style="padding:40px 24px;"><div class="flex justify-center mb-6"><div>${renderLogo(60)}</div></div><p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Your Personality</p><h2 class="font-black text-3xl mt-2" style="color:${res.color};">${res.name}</h2><p class="text-base font-bold text-gray-600 mt-2 mb-6">"${res.tag}"</p><p class="text-sm text-gray-500 mb-6 leading-relaxed">${res.desc}</p><div style="background:#F8FAFC; border-radius:16px; padding:24px; text-align:left; margin-bottom:24px;"><h4 class="font-bold text-sm uppercase tracking-wider mb-3">Key Traits</h4>${res.traits.map(t => `<div style="font-size:14px; font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:8px;"><i data-lucide="check-circle" style="width:16px; height:16px; color:var(--green-skin);"></i> ${t}</div>`).join('')}</div><button data-action="reset-quiz" class="btn-secondary w-full">Retake Test</button></div>`;
+  }
+  const q = QUIZ_QUESTIONS[appState.currentQuizIdx]; const progress = ((appState.currentQuizIdx) / QUIZ_QUESTIONS.length) * 100;
+  return `<div class="card"><div class="flex justify-between items-center mb-3"><span class="text-sm font-bold text-gray-500">Q ${appState.currentQuizIdx + 1} of ${QUIZ_QUESTIONS.length}</span><button data-action="reset-quiz" class="text-sm font-bold text-coco-pink">Restart</button></div><div style="height:10px; background:#E2E8F0; border-radius:999px; overflow:hidden; margin-bottom:24px;"><div style="height:100%; background:var(--primary-pink); width:${progress}%; transition:width 0.3s;"></div></div><h2 class="font-bold text-xl mb-6">${q.q}</h2><div>${q.opts.map((opt, i) => `<button data-quiz-ans="${i}" class="option-btn ${appState.quizAnswers[appState.currentQuizIdx] === i ? 'selected' : ''}">${opt.t}</button>`).join('')}</div><div class="flex justify-between mt-6"><button data-action="prev-q" class="btn-secondary w-1/3" ${appState.currentQuizIdx === 0 ? 'disabled style="opacity:0.5"' : ''}>Back</button><button data-action="next-q" class="btn-primary w-1/2" ${appState.quizAnswers[appState.currentQuizIdx] === null ? 'disabled style="opacity:0.5"' : ''}>Next</button></div></div>`;
+}
+
+function renderAskCoco() {
+  return `
+    <div style="max-width:600px; margin:0 auto;" class="fade-in">
+      <div class="card text-center mb-6">
+        <div class="flex justify-center mb-4"><div>${renderLogo(80)}</div></div>
+        <div class="bubble"><p id="guide-text-container"></p></div>
+      </div>
+      <h2 class="font-black text-2xl mb-6">Ask Coco</h2>
+      <div class="flex gap-2 overflow-x-auto no-scrollbar mb-6">
+        <button data-ask="chat" class="pill ${appState.activeAskTab === 'chat' ? 'active' : ''}">AI Chat</button>
+        <button data-ask="music" class="pill ${appState.activeAskTab === 'music' ? 'active' : ''}">Music</button>
+        <button data-ask="zodiac" class="pill ${appState.activeAskTab === 'zodiac' ? 'active' : ''}">Zodiac</button>
+        <button data-ask="chemistry" class="pill ${appState.activeAskTab === 'chemistry' ? 'active' : ''}">Chemistry</button>
+        <button data-ask="date" class="pill ${appState.activeAskTab === 'date' ? 'active' : ''}">Dates</button>
+        <button data-ask="vibe" class="pill ${appState.activeAskTab === 'vibe' ? 'active' : ''}">Reflection</button>
+      </div>
+      <div>
+        ${appState.activeAskTab === 'chat' ? renderChatUI() : ''}
+        ${appState.activeAskTab === 'music' ? renderMusicMatch() : ''}
+        ${appState.activeAskTab === 'zodiac' ? renderZodiac() : ''}
+        ${appState.activeAskTab === 'chemistry' ? renderChemistry() : ''}
+        ${appState.activeAskTab === 'date' ? renderDateIdeas() : ''}
+        ${appState.activeAskTab === 'vibe' ? renderVibeCheck() : ''}
+      </div>
+    </div>
+  `;
+}
+function renderChatUI() {
+  const SUGGESTED = ["I have a crush", "Does this person like me?", "Mixed signals", "How to ask out?", "Set a boundary"];
+  return `<div class="card" style="padding:0; overflow:hidden;"><div class="chat-container">${appState.chatHistory.length === 0 ? `<div style="text-align:center; padding:40px 20px;"><h3 class="font-bold text-lg mb-4">What's on your mind?</h3><div class="flex flex-wrap justify-center gap-2">${SUGGESTED.map(p => `<button data-suggest="${p}" class="pill">${p}</button>`).join('')}</div></div>` : appState.chatHistory.map(msg => `<div class="${msg.role === 'user' ? 'msg-user' : 'msg-ai'}">${escapeHTML(msg.text)}</div>`).join('')}
+  ${appState.isTyping ? `<div class="msg-ai" style="display:flex; gap:4px; align-items:center;"><div style="width:6px;height:6px;background:#718096;border-radius:50%;animation:bounce 1s infinite;"></div><div style="width:6px;height:6px;background:#718096;border-radius:50%;animation:bounce 1s infinite 0.2s;"></div><div style="width:6px;height:6px;background:#718096;border-radius:50%;animation:bounce 1s infinite 0.4s;"></div></div>` : ''}
+  </div><div style="padding:16px; border-top:1px solid #E2E8F0;"><div class="chat-input-wrapper"><input id="chat-input" type="text" placeholder="Type here..." class="chat-input"><button data-action="send-msg" class="btn-primary" style="width:auto; padding:12px;"><i data-lucide="send" style="width:18px; height:18px;"></i></button></div></div></div>`;
+}
+function renderMusicMatch() { return `<div class="card"><h3 class="font-bold text-lg mb-4">Music Compatibility</h3><select id="music-a" class="chat-input w-full mb-3"><option value="indie">Indie</option><option value="rnb">R&B</option><option value="pop">Pop</option><option value="rock">Rock</option><option value="hiphop">Hip-Hop</option></select><select id="music-b" class="chat-input w-full mb-6"><option value="indie">Indie</option><option value="rnb">R&B</option><option value="pop">Pop</option><option value="rock">Rock</option><option value="hiphop">Hip-Hop</option></select><button data-action="calc-music" class="btn-primary w-full">Check Compatibility</button><div id="music-result" class="hidden text-center font-bold text-lg mt-6"></div></div>`; }
+function renderZodiac() { const signs = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces']; return `<div class="card"><h3 class="font-bold text-lg mb-4">Zodiac Chemistry</h3><select id="zod-a" class="chat-input w-full mb-3">${signs.map(s=>`<option value="${s}">${s}</option>`).join('')}</select><select id="zod-b" class="chat-input w-full mb-6">${signs.map(s=>`<option value="${s}">${s}</option>`).join('')}</select><button data-action="calc-zodiac" class="btn-primary w-full">Check Synergy</button><div id="zod-result" class="hidden text-center font-bold text-lg mt-6"></div></div>`; }
+function renderChemistry() { return `<div class="card"><h3 class="font-bold text-lg mb-4">Chemistry Quiz</h3>${CHEM_QUESTIONS.map((item, i) => `<div class="mb-6"><p class="text-sm font-bold mb-3">${i+1}. ${item.q}</p><div class="flex gap-2">${item.a.map((opt, j) => `<button data-chem="${i}-${j}" class="pill flex-1 ${appState.chemAnswers[i] === j ? 'active' : ''}">${opt.t}</button>`).join('')}</div></div>`).join('')}<button data-action="calc-chem" class="btn-primary w-full">Calculate</button><div id="chem-res" class="hidden text-center mt-6"><span id="chem-score" class="text-3xl font-black" style="color:var(--primary-pink);"></span><p id="chem-title" class="text-sm font-bold mt-2"></p></div></div>`; }
+function renderDateIdeas() { return `<div class="card"><h3 class="font-bold text-lg mb-4">Date Ideas</h3><select id="date-budget" class="chat-input w-full mb-6"><option value="ALL">Any Budget</option><option value="FREE">Free</option><option value="CHEAP">Budget</option><option value="MID">Mid-Range</option><option value="FANCY">Luxury</option></select><button data-action="gen-date" class="btn-primary w-full">Suggest Date</button><div id="date-result" class="hidden mt-6 p-4" style="background:#F8FAFC; border-radius:16px; border:1px solid #E2E8F0;"><h4 id="date-title" class="font-bold text-lg"></h4><p id="date-desc" class="text-sm text-gray-500 mt-2 leading-relaxed"></p></div></div>`; }
+function renderVibeCheck() { return `<div class="card"><h3 class="font-bold text-lg mb-4">Reflection Prompt</h3>${VIBE_QUESTIONS.map((item, i) => `<div class="mb-6"><p class="text-sm font-bold mb-3">${i+1}. ${item.q}</p><div class="flex gap-2">${item.a.map((opt, j) => `<button data-vibe="${i}-${j}" class="pill flex-1 ${appState.vibeAnswers[i] === j ? 'active' : ''}">${opt}</button>`).join('')}</div></div>`).join('')}<button data-action="calc-vibe" class="btn-primary w-full">Reflect</button><div id="vibe-res" class="hidden mt-6 p-5" style="background:#F0FDF4; border-radius:16px;"><b id="vibe-title" class="block text-base font-bold mb-2"></b><p id="vibe-desc" class="text-sm text-gray-600 leading-relaxed"></p></div></div>`; }
+
+function renderLoveAdvice() {
+  return `
+    <div style="max-width:500px; margin:0 auto;" class="fade-in">
+      <div class="card text-center mb-6">
+        <div class="flex justify-center mb-4"><div>${renderLogo(80)}</div></div>
+        <div class="bubble"><p id="guide-text-container"></p></div>
+      </div>
+      <div class="flex items-center gap-3 mb-6"><i data-lucide="edit-3" class="text-coco-pink" style="width:28px; height:28px;"></i><h2 class="font-black text-2xl">Love Advice AI</h2></div>
+      <div class="card" style="padding:24px;">
+        <div class="mb-6"><label class="text-sm font-bold block mb-2">Situation</label><select id="coach-context" class="chat-input w-full"><option value="start">Start a Conversation</option><option value="flirt">Flirting Coach</option><option value="askout">Ask Them Out</option><option value="feelings">Express Your Feelings</option></select></div>
+        <div class="mb-6"><label class="text-sm font-bold block mb-2">Tone</label><div class="flex flex-wrap gap-2">${['Sweet','Playful','Casual','Confident','Honest'].map(t => `<button data-tone="${t}" class="pill ${t === appState.activeTone ? 'active' : ''}">${t}</button>`).join('')}</div></div>
+        <button data-action="gen-text" class="btn-primary w-full">Generate Suggestions</button>
+      </div>
+      <div id="coach-results" class="hidden flex-col gap-3 mt-6"></div>
+    </div>
+  `;
+}
+
+function renderMyLove() {
+  const res = appState.personalityResult ? PERSONALITIES[appState.personalityResult] : null;
+  return `
+    <div style="max-width:600px; margin:0 auto;" class="fade-in">
+      <div class="card text-center mb-6">
+        <div class="flex justify-center mb-4"><div>${renderLogo(80)}</div></div>
+        <div class="bubble"><p id="guide-text-container"></p></div>
+      </div>
+      <h2 class="font-black text-2xl mb-6">My Love</h2>
+      <div class="card mb-6">
+        <div class="flex justify-between items-center mb-4 border-b pb-3"><h3 class="font-bold text-lg">Love Profile</h3><button data-nav="discover" class="text-sm font-bold text-coco-pink">${res ? 'Retake' : 'Take Test'}</button></div>
+        ${res ? `<div class="flex items-center gap-4"><div style="width:48px; height:48px; border-radius:12px; background:${res.color}; display:flex; align-items:center; justify-content:center; color:#FFF;"><i data-lucide="${res.icon}" style="width:24px; height:24px;"></i></div><div><p class="font-bold text-xl">${res.name}</p><p class="text-sm font-bold text-gray-500 mt-1">${res.tag}</p></div></div>` : `<p class="text-sm text-gray-500">Take the Personality Test to discover your dating style.</p>`}
+      </div>
+      <div class="card">
+        <div class="flex justify-between items-center mb-4 border-b pb-3"><h3 class="font-bold text-lg">Love Journal</h3><button data-action="new-journal" class="btn-primary" style="width:auto; padding:8px 16px; font-size:13px;">New Entry</button></div>
+        <div>${appState.journalEntries.length === 0 ? `<p class="text-sm text-gray-500 text-center py-6">No entries yet. Write down how you feel.</p>` : appState.journalEntries.map(entry => `<div class="mb-3 p-4 bg-gray-50 rounded-2xl"><p class="text-xs font-bold text-gray-400 mb-2">${escapeHTML(entry.date)}</p><p class="text-sm font-medium leading-relaxed">${escapeHTML(entry.text)}</p></div>`).join('')}</div>
+      </div>
+    </div>
+  `;
+}
+
+// =========================================================
+// 7. EVENT DELEGATION
+// =========================================================
+document.addEventListener('click', async (e) => {
+  const target = e.target.closest('[data-action], [data-nav], [data-checkin], [data-discover], [data-deep], [data-party], [data-quiz-ans], [data-ask], [data-suggest], [data-chem], [data-vibe], [data-tone], [data-copy], #desktop-mode-toggle, #mobile-mode-toggle, #btn-modal-cancel, #btn-modal-save, #btn-reset');
+  if (!target) return;
+
+  const action = target.getAttribute('data-action');
+  const nav = target.getAttribute('data-nav');
+  const checkin = target.getAttribute('data-checkin');
+  const discover = target.getAttribute('data-discover');
+  const deep = target.getAttribute('data-deep');
+  const party = target.getAttribute('data-party');
+  const quizAns = target.getAttribute('data-quiz-ans');
+  const ask = target.getAttribute('data-ask');
+  const suggest = target.getAttribute('data-suggest');
+  const chem = target.getAttribute('data-chem');
+  const vibe = target.getAttribute('data-vibe');
+  const tone = target.getAttribute('data-tone');
+  const copyVal = target.getAttribute('data-copy');
+
+  if (nav) { appState.currentPage = nav; appState.isPlaying = false; renderPage(); return; }
+  if (target.closest('#desktop-mode-toggle') || target.closest('#mobile-mode-toggle')) { appState.mode = appState.mode === 'personal' ? 'duo' : 'personal'; saveState(); renderHeader(); renderPage(); return; }
+  if (target.id === 'btn-reset') { if(confirm("Reset all data?")) { localStorage.removeItem('coco_state'); location.reload(); } return; }
+  if (target.id === 'btn-modal-cancel') { closeModal(); return; }
+  if (target.id === 'btn-modal-save') { submitModal(); return; }
+
+  if (action === 'complete-onboard' || action === 'complete-onboard-skip') { appState.onboardingComplete = true; addXP(10); renderPage(); return; }
+  if (action === 'close-discover') { appState.isPlaying = false; renderPage(); return; }
+
+  if (checkin) {
+    appState.streak += 1;
+    appState.guideText = `You're feeling ${checkin.toLowerCase()}. I'm here for you.`;
+    addXP(5); renderPage(); return;
+  }
+
+  if (discover) { appState.activeDiscoverTab = discover; if (discover === 'number') appState.currentNumQ = null; if (discover === 'deeptalk') appState.currentDeepQ = null; if (discover === 'party') appState.currentPartyCard = null; renderPage(); return; }
+  if (deep) { appState.activeDeepLevel = parseInt(deep); appState.currentDeepQ = null; renderPage(); return; }
+  if (party) { appState.activePartyType = party; appState.currentPartyCard = null; renderPage(); return; }
+  if (quizAns !== null) { appState.quizAnswers[appState.currentQuizIdx] = parseInt(quizAns); addXP(2); renderPage(); return; }
+  
+  if (ask) { appState.activeAskTab = ask; renderPage(); return; }
+  if (suggest) { sendMessage(suggest); return; }
+  if (chem) { const [q, o] = chem.split('-').map(Number); appState.chemAnswers[q] = o; renderPage(); return; }
+  if (vibe) { const [q, o] = vibe.split('-').map(Number); appState.vibeAnswers[q] = o; renderPage(); return; }
+  
+  if (tone) {
+    document.querySelectorAll('[data-tone]').forEach(b => b.classList.remove('active'));
+    target.classList.add('active');
+    appState.activeTone = tone;
+    return;
+  }
+
+  if (copyVal) { navigator.clipboard.writeText(copyVal); showToast("Copied!"); return; }
+
+  if (action === 'next-num') { appState.currentNumQ = NUMBER_QUESTIONS[Math.floor(Math.random() * NUMBER_QUESTIONS.length)]; renderPage(); return; }
+  if (action === 'next-deep') { const pool = DEEP_Q[appState.activeDeepLevel]; appState.currentDeepQ = pool[Math.floor(Math.random() * pool.length)]; renderPage(); return; }
+  if (action === 'next-party') { const pool = PARTY_CARDS[appState.activePartyType]; appState.currentPartyCard = pool[Math.floor(Math.random() * pool.length)]; renderPage(); return; }
+  if (action === 'accept-dare') { addXP(10); renderPage(); return; }
+  if (action === 'prev-q') { if (appState.currentQuizIdx > 0) { appState.currentQuizIdx--; renderPage(); } return; }
+  if (action === 'next-q') {
+    if (appState.currentQuizIdx < QUIZ_QUESTIONS.length - 1) { appState.currentQuizIdx++; renderPage(); } 
+    else { 
+      const scores = { blunt: 0, momo: 0, pippo: 0, lulu: 0 };
+      appState.quizAnswers.forEach((ansIdx, qIdx) => { if (ansIdx !== null) scores[QUIZ_QUESTIONS[qIdx].opts[ansIdx].v]++; });
+      let best = 'blunt'; let max = 0;
+      for (const [key, val] of Object.entries(scores)) { if (val > max) { max = val; best = key; } }
+      appState.personalityResult = best; addXP(20); renderPage();
+    }
+    return;
+  }
+  if (action === 'reset-quiz') { appState.currentQuizIdx = 0; appState.quizAnswers = new Array(QUIZ_QUESTIONS.length).fill(null); appState.personalityResult = null; renderPage(); return; }
+  if (action === 'send-msg') { sendMessage(); return; }
+  
+  if (action === 'calc-music') {
+    const a = document.getElementById('music-a').value, b = document.getElementById('music-b').value;
+    const score = a === b ? 98 : 85;
+    const resEl = document.getElementById('music-result'); resEl.classList.remove('hidden');
+    resEl.innerHTML = `Vibe Match: <span style="color:var(--primary-pink)">${score}%</span>`;
+    return;
+  }
+  if (action === 'calc-zodiac') {
+    const resEl = document.getElementById('zod-result'); resEl.classList.remove('hidden');
+    resEl.innerHTML = `Synergy: <span style="color:var(--primary-pink)">88%</span>`;
+    return;
+  }
+  if (action === 'calc-chem') {
+    let total = 0;
+    appState.chemAnswers.forEach((oIdx, qIdx) => { if(oIdx !== null) total += CHEM_QUESTIONS[qIdx].a[oIdx].v; });
+    const pct = Math.round((total / 10) * 100);
+    const resEl = document.getElementById('chem-res'); resEl.classList.remove('hidden');
+    document.getElementById('chem-score').textContent = pct + '%';
+    document.getElementById('chem-title').textContent = pct >= 90 ? 'Perfectly Aligned' : pct >= 70 ? 'Strong Connection' : 'Room to Grow';
+    return;
+  }
+  if (action === 'gen-date') {
+    const bud = document.getElementById('date-budget').value;
+    let pool = DATE_IDEAS.filter(d => bud === 'ALL' || d.budget === bud);
+    if (!pool.length) pool = DATE_IDEAS;
+    const item = pool[Math.floor(Math.random() * pool.length)];
+    
+    const resEl = document.getElementById('date-result'); resEl.classList.remove('hidden');
+    document.getElementById('date-title').textContent = item.title;
+    document.getElementById('date-desc').textContent = item.desc;
+    return;
+  }
+  if (action === 'calc-vibe') {
+    const resEl = document.getElementById('vibe-res'); resEl.classList.remove('hidden');
+    document.getElementById('vibe-title').textContent = "Positive Sign";
+    document.getElementById('vibe-desc').textContent = "Dia menghargai orang lain & komunikasi dua arah sehat.";
+    return;
+  }
+  if (action === 'gen-text') {
+    const context = document.getElementById('coach-context').value;
+    const templates = COACH_TEMPLATES[context] ? COACH_TEMPLATES[context][appState.activeTone] : ["Here's a message."];
+    const container = document.getElementById('coach-results');
+    container.classList.remove('hidden'); container.style.display = 'flex';
+    container.innerHTML = templates.map(t => `<div class="card" style="margin:0; padding:16px;"><p class="font-bold text-sm mb-3">"${escapeHTML(t)}"</p><button data-copy="${escapeHTML(t)}" class="text-xs font-bold text-coco-pink text-left">Copy</button></div>`).join('');
+    return;
+  }
+  if (action === 'new-journal') {
+    openModal('New Entry', 'How are you feeling today?', (val) => {
+      appState.journalEntries.unshift({ date: new Date().toLocaleDateString(), text: val });
+      addXP(10); saveState(); renderPage();
+    });
+    return;
+  }
+
+  renderPage();
+});
+
+async function sendMessage(text = null) {
+  const input = document.getElementById('chat-input');
+  const msg = text || (input ? input.value.trim() : '');
+  if (!msg) return;
+  
+  appState.chatHistory.push({ role: 'user', text: msg });
+  if (input) input.value = '';
+  appState.isTyping = true;
+  renderPage();
+  
+  const aiResponse = await callOpenAI(msg, "You are Coco, a warm dating advisor. Give practical and concise advice.");
+  
+  appState.chatHistory.push({ role: 'ai', text: aiResponse });
+  appState.isTyping = false;
+  renderPage();
+}
+
+// =========================================================
+// 8. UTILS & BOOT
+// =========================================================
+function openModal(title, placeholder, callback) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalInput').placeholder = placeholder;
+  document.getElementById('modalInput').value = '';
+  appState.modalCallback = callback;
+  document.getElementById('inputModal').classList.remove('hidden');
+}
+function closeModal() {
+  document.getElementById('inputModal').classList.add('hidden');
+  appState.modalCallback = null;
+}
+function submitModal() {
+  const val = document.getElementById('modalInput').value.trim();
+  if (val && appState.modalCallback) appState.modalCallback(val);
+  closeModal();
+}
+
+function showToast(msg) {
+  const existing = document.getElementById('toast'); if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'toast';
+  toast.style.cssText = 'position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--dark-text); color:#FFF; padding:10px 20px; border-radius:12px; font-size:13px; font-weight:bold; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+  toast.textContent = msg; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  renderHeader();
+  renderPage();
+  if (window.lucide) lucide.createIcons();
+});
+</script>
+</body>
+</html>
